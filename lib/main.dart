@@ -16,7 +16,7 @@ class OpenedHeavensApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Opened Heavens',
+      title: 'FaithFoundation',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
       home: const OnboardingScreen(),

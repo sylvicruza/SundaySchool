@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sundayschool/screens/main_container.dart';
+import 'package:faithfoundation/screens/main_container.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});

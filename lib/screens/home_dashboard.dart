@@ -160,8 +160,8 @@ class HomeDashboard extends StatelessWidget {
                   _buildSectionHeading(
                     context,
                     eyebrow: 'About this app',
-                    title: 'Designed for focused Bible study',
-                    subtitle: 'The dashboard now helps you understand where to begin, what to open next, and how far you have gone.',
+                    title: 'A digital companion to the 2026 Bible Study Manual',
+                    subtitle: 'Built to present the manual in a clean, accessible format for personal study, class preparation, reflection, and prayer.',
                   ),
                   const SizedBox(height: 16),
                   _buildPurposeCard(context),
@@ -799,14 +799,19 @@ class HomeDashboard extends StatelessWidget {
               Icon(Icons.auto_stories_rounded, color: Theme.of(context).primaryColor),
               const SizedBox(width: 10),
               Text(
-                'Focused on Bible Study',
+                'About FaithFoundation',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 14),
           Text(
-            'This version keeps the app clear and focused: browse the 2026 Sunday School manual, open each month, read each lesson, mark your study progress, save reflections, and submit prayer requests.',
+            'FaithFoundation is the digital edition of the Opened Heavens Chapel Bible Study Manual 2026. It presents the Sunday School Department publication in a simple and orderly experience, helping members and teachers move through each month, follow every lesson outline, reflect on key truths, and stay engaged in prayer.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.7),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'The app is designed to support consistent Bible study with clarity and reverence, while keeping the emphasis on Scripture, spiritual growth, and faithful participation in the life of the church.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.7),
           ),
         ],

@@ -1,5 +1,5 @@
-name: sundayschool
-description: "A new Flutter project."
+name: faithfoundation
+description: "FaithFoundation is the digital edition of the Opened Heavens Chapel Bible Study Manual 2026, created to support structured Bible study, reflection, and prayer."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

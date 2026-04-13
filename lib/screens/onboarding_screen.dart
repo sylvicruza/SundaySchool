@@ -8,9 +8,11 @@ class OnboardingScreen extends StatelessWidget {
 
   Widget _buildLogo(Color color) {
     return Image.asset(
-      'assets/images/logo.png',
+      'assets/images/ohc-logo.png',
       fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => Icon(Icons.church, color: color, size: 24),
+      color: color,
+      colorBlendMode: BlendMode.srcIn,
+      errorBuilder: (context, error, stackTrace) => Icon(Icons.church, color: color, size: 18),
     );
   }
 
@@ -64,17 +66,20 @@ class OnboardingScreen extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        width: 64,
+                        width: 92,
                         height: 64,
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 10),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(32),
                           boxShadow: [
                             BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)
                           ],
                         ),
-                        child: _buildLogo(primaryColor),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(32),
+                          child: _buildLogo(primaryColor),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -86,6 +91,7 @@ class OnboardingScreen extends StatelessWidget {
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.6,
+                            fontSize: 15,
                           ),
                         ),
                       ),

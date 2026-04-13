@@ -13,8 +13,10 @@ class HomeDashboard extends StatelessWidget {
 
   Widget _buildLogo(Color color) {
     return Image.asset(
-      'assets/images/logo.png',
+      'assets/images/ohc-logo.png',
       fit: BoxFit.contain,
+      color: color,
+      colorBlendMode: BlendMode.srcIn,
       errorBuilder: (context, error, stackTrace) => Icon(Icons.church, color: color, size: 18),
     );
   }
@@ -46,12 +48,12 @@ class HomeDashboard extends StatelessWidget {
                 child: Row(
                   children: [
                     Container(
-                      width: 44,
+                      width: 68,
                       height: 44,
-                      padding: const EdgeInsets.all(5),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
                             color: primaryColor.withOpacity(0.08),
@@ -60,7 +62,10 @@ class HomeDashboard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: _buildLogo(primaryColor),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: _buildLogo(primaryColor),
+                      ),
                     ),
                     const Spacer(),
                     Container(
@@ -811,6 +816,25 @@ class HomeDashboard extends StatelessWidget {
           Text(
             'The app is designed to support consistent Bible study with clarity and reverence, while keeping the emphasis on Scripture, spiritual growth, and faithful participation in the life of the church.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.7),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F2FC),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.08)),
+            ),
+            child: Text(
+              'THIS PUBLICATION IS THE PRODUCT OF THE SUNDAY SCHOOL DEPARTMENT, ASSEMBLIES OF GOD NIGERIA.',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.w700,
+                    height: 1.6,
+                    letterSpacing: 0.4,
+                  ),
+            ),
           ),
         ],
       ),

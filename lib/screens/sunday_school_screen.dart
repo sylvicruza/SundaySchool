@@ -16,8 +16,10 @@ class _SundaySchoolScreenState extends State<SundaySchoolScreen> {
 
   Widget _buildLogo(Color color) {
     return Image.asset(
-      'assets/images/logo.png',
+      'assets/images/ohc-logo.png',
       fit: BoxFit.contain,
+      color: color,
+      colorBlendMode: BlendMode.srcIn,
       errorBuilder: (context, error, stackTrace) => Icon(Icons.church, color: color),
     );
   }
@@ -88,12 +90,12 @@ class _SundaySchoolScreenState extends State<SundaySchoolScreen> {
                           Row(
                             children: [
                               Container(
-                                width: 52,
+                                width: 96,
                                 height: 52,
-                                padding: const EdgeInsets.all(7),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(18),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.12),
@@ -102,7 +104,10 @@ class _SundaySchoolScreenState extends State<SundaySchoolScreen> {
                                     ),
                                   ],
                                 ),
-                                child: _buildLogo(primaryColor),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: _buildLogo(primaryColor),
+                                ),
                               ),
                               const Spacer(),
                               Container(

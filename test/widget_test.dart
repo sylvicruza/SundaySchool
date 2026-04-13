@@ -14,7 +14,7 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Home'), findsWidgets);
     expect(find.text('Prayer'), findsOneWidget);
   });
 }

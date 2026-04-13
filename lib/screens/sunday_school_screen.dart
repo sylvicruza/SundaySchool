@@ -18,8 +18,6 @@ class _SundaySchoolScreenState extends State<SundaySchoolScreen> {
     return Image.asset(
       'assets/images/logo.png',
       fit: BoxFit.contain,
-      color: color,
-      colorBlendMode: BlendMode.srcIn,
       errorBuilder: (context, error, stackTrace) => Icon(Icons.church, color: color),
     );
   }

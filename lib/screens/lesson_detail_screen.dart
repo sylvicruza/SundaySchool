@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/curriculum.dart';
 import '../services/data_service.dart';
 import 'reflections_screen.dart';
@@ -31,8 +30,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       width: 24,
       height: 24,
       fit: BoxFit.contain,
-      color: color,
-      colorBlendMode: BlendMode.srcIn,
       errorBuilder: (ctx, err, stack) => Icon(Icons.church, size: 20, color: color),
     );
   }
@@ -265,26 +262,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   const Divider(height: 1, color: Color(0xFFEEEEEE)),
                   const SizedBox(height: 40),
                   
-                  // Lesson Content (Markdown)
-                  MarkdownBody(
-                    data: widget.lesson.content,
-                    selectable: true,
-                    styleSheet: MarkdownStyleSheet(
-                      h1: Theme.of(context).textTheme.headlineLarge?.copyWith(color: primaryColor),
-                      h2: Theme.of(context).textTheme.headlineMedium?.copyWith(color: primaryColor),
-                      h3: Theme.of(context).textTheme.titleLarge?.copyWith(color: primaryColor, fontSize: 20),
-                      h4: Theme.of(context).textTheme.titleMedium?.copyWith(color: primaryColor, fontSize: 17, fontWeight: FontWeight.bold),
-                      p: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15, height: 1.7, color: const Color(0xFF2C2C2C)),
-                      listBullet: TextStyle(color: accentColor, fontWeight: FontWeight.bold),
-                      blockquote: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
-                      blockquotePadding: const EdgeInsets.all(16),
-                      blockquoteDecoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border(left: BorderSide(color: accentColor, width: 4)),
-                      ),
-                    ),
-                  ),
+                  _buildLessonContent(context, widget.lesson.content),
                   
                   const SizedBox(height: 60),
                   
@@ -366,5 +344,142 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildLessonContent(BuildContext context, String content) {
+    final List<Widget> children = [];
+    final Color primaryColor = Theme.of(context).primaryColor;
+    final Color accentColor = Theme.of(context).colorScheme.secondary;
+    final TextStyle bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontSize: 15,
+          height: 1.7,
+          color: const Color(0xFF2C2C2C),
+        ) ??
+        const TextStyle(fontSize: 15, height: 1.7, color: Color(0xFF2C2C2C));
+
+    for (final String rawLine in content.split('\n')) {
+      final String line = rawLine.trimRight();
+      if (line.trim().isEmpty) {
+        children.add(const SizedBox(height: 16));
+        continue;
+      }
+
+      final String trimmed = line.trimLeft();
+      if (trimmed.startsWith('#### ')) {
+        children.add(_buildSelectableBlock(
+          trimmed.substring(5),
+          Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: primaryColor,
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
+        ));
+        continue;
+      }
+      if (trimmed.startsWith('### ')) {
+        children.add(_buildSelectableBlock(
+          trimmed.substring(4),
+          Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: primaryColor,
+                fontSize: 20,
+              ),
+        ));
+        continue;
+      }
+      if (trimmed.startsWith('## ')) {
+        children.add(_buildSelectableBlock(
+          trimmed.substring(3),
+          Theme.of(context).textTheme.headlineMedium?.copyWith(color: primaryColor),
+        ));
+        continue;
+      }
+      if (trimmed.startsWith('# ')) {
+        children.add(_buildSelectableBlock(
+          trimmed.substring(2),
+          Theme.of(context).textTheme.headlineLarge?.copyWith(color: primaryColor),
+        ));
+        continue;
+      }
+      if (trimmed.startsWith('> ')) {
+        children.add(Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border(left: BorderSide(color: accentColor, width: 4)),
+          ),
+          child: SelectableText(
+            trimmed.substring(2),
+            style: bodyStyle.copyWith(color: Colors.grey, fontStyle: FontStyle.italic),
+          ),
+        ));
+        continue;
+      }
+      if (_isBullet(trimmed)) {
+        children.add(Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 6, right: 10),
+                child: Text(
+                  '•',
+                  style: TextStyle(color: accentColor, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              Expanded(
+                child: SelectableText(
+                  _bulletText(trimmed),
+                  style: bodyStyle,
+                ),
+              ),
+            ],
+          ),
+        ));
+        continue;
+      }
+
+      children.add(_buildSelectableBlock(_stripInlineMarkdown(trimmed), bodyStyle));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
+  Widget _buildSelectableBlock(String text, TextStyle? style) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SelectableText(
+        _stripInlineMarkdown(text),
+        style: style,
+      ),
+    );
+  }
+
+  bool _isBullet(String line) {
+    return line.startsWith('- ') ||
+        line.startsWith('* ') ||
+        RegExp(r'^\d+\.\s').hasMatch(line);
+  }
+
+  String _bulletText(String line) {
+    if (line.startsWith('- ') || line.startsWith('* ')) {
+      return _stripInlineMarkdown(line.substring(2));
+    }
+    return _stripInlineMarkdown(line.replaceFirst(RegExp(r'^\d+\.\s'), ''));
+  }
+
+  String _stripInlineMarkdown(String text) {
+    return text
+        .replaceAllMapped(RegExp(r'\*\*(.*?)\*\*'), (match) => match.group(1) ?? '')
+        .replaceAllMapped(RegExp(r'__(.*?)__'), (match) => match.group(1) ?? '')
+        .replaceAllMapped(RegExp(r'`(.*?)`'), (match) => match.group(1) ?? '')
+        .replaceAllMapped(RegExp(r'\[(.*?)\]\((.*?)\)'), (match) => match.group(1) ?? '')
+        .trim();
   }
 }

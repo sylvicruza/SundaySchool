@@ -10,8 +10,6 @@ class OnboardingScreen extends StatelessWidget {
     return Image.asset(
       'assets/images/logo.png',
       fit: BoxFit.contain,
-      color: color,
-      colorBlendMode: BlendMode.srcIn,
       errorBuilder: (context, error, stackTrace) => Icon(Icons.church, color: color, size: 24),
     );
   }

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/curriculum.dart';
 
@@ -15,12 +14,11 @@ class DataService {
   static const String _studiedLessonsKey = 'studied_lessons';
   static const String _bookmarkedLessonsKey = 'bookmarked_lessons';
 
-  late SharedPreferences _prefs;
+  final Map<String, Object> _store = <String, Object>{};
   CurriculumData? curriculum;
   String? curriculumLoadError;
 
   Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
     await _loadCurriculum();
   }
 
@@ -263,7 +261,7 @@ class DataService {
   }
 
   List<PrayerRequest> getPrayerRequests() {
-    final String? prayersJson = _prefs.getString('prayer_requests');
+    final String? prayersJson = _store['prayer_requests'] as String?;
     if (prayersJson == null) {
       return <PrayerRequest>[];
     }
@@ -281,14 +279,13 @@ class DataService {
   Future<void> savePrayerRequest(PrayerRequest request) async {
     final List<PrayerRequest> list = getPrayerRequests();
     list.insert(0, request);
-    await _prefs.setString(
-      'prayer_requests',
-      json.encode(list.map((PrayerRequest e) => e.toJson()).toList()),
+    _store['prayer_requests'] = json.encode(
+      list.map((PrayerRequest e) => e.toJson()).toList(),
     );
   }
 
   List<ReflectionNote> getReflections() {
-    final String? notesJson = _prefs.getString('reflection_notes');
+    final String? notesJson = _store['reflection_notes'] as String?;
     if (notesJson == null) {
       return <ReflectionNote>[];
     }
@@ -306,9 +303,8 @@ class DataService {
   Future<void> saveReflection(ReflectionNote note) async {
     final List<ReflectionNote> list = getReflections();
     list.insert(0, note);
-    await _prefs.setString(
-      'reflection_notes',
-      json.encode(list.map((ReflectionNote e) => e.toJson()).toList()),
+    _store['reflection_notes'] = json.encode(
+      list.map((ReflectionNote e) => e.toJson()).toList(),
     );
   }
 
@@ -317,7 +313,8 @@ class DataService {
   }
 
   Set<String> getStudiedLessons() {
-    return _prefs.getStringList(_studiedLessonsKey)?.toSet() ?? <String>{};
+    return List<String>.from(_store[_studiedLessonsKey] as List<String>? ?? const <String>[])
+        .toSet();
   }
 
   bool isLessonStudied(LessonData lesson) {
@@ -334,12 +331,13 @@ class DataService {
       studied.add(key);
     }
 
-    await _prefs.setStringList(_studiedLessonsKey, studied.toList());
+    _store[_studiedLessonsKey] = studied.toList();
     return studied.contains(key);
   }
 
   Set<String> getBookmarkedLessons() {
-    return _prefs.getStringList(_bookmarkedLessonsKey)?.toSet() ?? <String>{};
+    return List<String>.from(_store[_bookmarkedLessonsKey] as List<String>? ?? const <String>[])
+        .toSet();
   }
 
   bool isLessonBookmarked(LessonData lesson) {
@@ -356,7 +354,7 @@ class DataService {
       bookmarked.add(key);
     }
 
-    await _prefs.setStringList(_bookmarkedLessonsKey, bookmarked.toList());
+    _store[_bookmarkedLessonsKey] = bookmarked.toList();
     return bookmarked.contains(key);
   }
 }

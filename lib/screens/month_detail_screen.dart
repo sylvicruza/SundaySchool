@@ -12,8 +12,6 @@ class MonthDetailScreen extends StatelessWidget {
       width: 24,
       height: 24,
       fit: BoxFit.contain,
-      color: color,
-      colorBlendMode: BlendMode.srcIn,
       errorBuilder: (ctx, err, stack) => Icon(Icons.church, size: 20, color: color),
     );
   }

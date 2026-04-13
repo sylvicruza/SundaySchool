@@ -1,4 +1,4 @@
-#include? "../Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
+#include? "../Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"
 FLUTTER_ROOT=/Users/exquisapp/flutter
 FLUTTER_APPLICATION_PATH=/Users/exquisapp/Documents/SundaySchool
 COCOAPODS_PARALLEL_CODE_SIGN=true

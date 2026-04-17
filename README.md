@@ -2,6 +2,8 @@
 
 FaithFoundation is the digital edition of the Opened Heavens Chapel Bible Study Manual 2026. It is designed to support structured Bible study, lesson preparation, reflection, and prayer in a clean and accessible format.
 
+This repository is configured for automated web, Android, and iOS delivery flows.
+
 ## Local development
 
 ```bash

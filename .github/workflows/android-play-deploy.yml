@@ -47,7 +47,7 @@ jobs:
           storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          storeFile=upload-keystore.jks
+          storeFile=../upload-keystore.jks
           EOF
 
       - name: Read Flutter version name
@@ -62,7 +62,7 @@ jobs:
         id: build_number
         shell: bash
         run: |
-          echo "value=$((1000 + ${{ github.run_number }}))" >> "$GITHUB_OUTPUT"
+          echo "value=$((1000 + (${{ github.run_number }} * 10) + ${{ github.run_attempt }}))" >> "$GITHUB_OUTPUT"
 
       - name: Build Android App Bundle
         run: |
@@ -70,12 +70,65 @@ jobs:
             --build-name "${{ steps.version_name.outputs.value }}" \
             --build-number "${{ steps.build_number.outputs.value }}"
 
-      - name: Upload bundle to Play Console
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+
+      - name: Package native debug symbols
+        id: debug_symbols
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          symbols_dir="$(find build/app -type d \( -path '*/merged_native_libs/*/out/lib' -o -path '*/stripped_native_libs/*/out/lib' \) | head -n 1 || true)"
+
+          if [ -z "$symbols_dir" ]; then
+            echo "zip_path=" >> "$GITHUB_OUTPUT"
+            echo "No native debug symbols directory found; continuing without symbol upload."
+            exit 0
+          fi
+
+          mkdir -p build/app/outputs
+          zip_path="$GITHUB_WORKSPACE/build/app/outputs/native-debug-symbols.zip"
+
+          rm -f "$zip_path"
+          (
+            cd "$symbols_dir"
+            zip -r "$zip_path" .
+          )
+
+          echo "zip_path=build/app/outputs/native-debug-symbols.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Upload native debug symbols artifact
+        if: ${{ steps.debug_symbols.outputs.zip_path != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-native-debug-symbols
+          path: ${{ steps.debug_symbols.outputs.zip_path }}
+
+      - name: Upload to Play Console with native debug symbols
+        if: ${{ steps.debug_symbols.outputs.zip_path != '' }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: ${{ env.PACKAGE_NAME }}
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          debugSymbols: ${{ steps.debug_symbols.outputs.zip_path }}
+          whatsNewDirectory: distribution/whatsnew
+          track: ${{ env.PLAY_TRACK }}
+          releaseName: FaithFoundation ${{ steps.version_name.outputs.value }} (${{ steps.build_number.outputs.value }})
+          status: completed
+
+      - name: Upload to Play Console
+        if: ${{ steps.debug_symbols.outputs.zip_path == '' }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ env.PACKAGE_NAME }}
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          whatsNewDirectory: distribution/whatsnew
           track: ${{ env.PLAY_TRACK }}
           releaseName: FaithFoundation ${{ steps.version_name.outputs.value }} (${{ steps.build_number.outputs.value }})
           status: completed

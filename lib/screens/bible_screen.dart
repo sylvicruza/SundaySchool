@@ -236,9 +236,7 @@ class _BibleScreenState extends State<BibleScreen> {
   }
 
   Future<void> _shareVerse(BibleVerse verse) async {
-    await SharePlus.instance.share(
-      ShareParams(text: _verseShareText(verse)),
-    );
+    await Share.share(_verseShareText(verse));
   }
 
   Future<void> _saveVerseAsReflection(BibleVerse verse) async {

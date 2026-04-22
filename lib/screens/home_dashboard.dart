@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/curriculum.dart';
 import '../services/data_service.dart';
+import 'bible_screen.dart';
 import 'month_detail_screen.dart';
-import 'prayer_request_screen.dart';
 import 'reflections_screen.dart';
 
 class HomeDashboard extends StatelessWidget {
@@ -17,7 +17,8 @@ class HomeDashboard extends StatelessWidget {
       fit: BoxFit.contain,
       color: color,
       colorBlendMode: BlendMode.srcIn,
-      errorBuilder: (context, error, stackTrace) => Icon(Icons.church, color: color, size: 18),
+      errorBuilder: (context, error, stackTrace) =>
+          Icon(Icons.church, color: color, size: 18),
     );
   }
 
@@ -29,8 +30,10 @@ class HomeDashboard extends StatelessWidget {
     final currentMonth = _currentMonth();
     final months = DataService().curriculum?.months ?? const <MonthData>[];
     final studiedCount = DataService().getStudiedLessons().length;
-    final totalLessons = months.fold<int>(0, (sum, month) => sum + month.lessons.length);
-    final remainingLessons = totalLessons > studiedCount ? totalLessons - studiedCount : 0;
+    final totalLessons =
+        months.fold<int>(0, (sum, month) => sum + month.lessons.length);
+    final remainingLessons =
+        totalLessons > studiedCount ? totalLessons - studiedCount : 0;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -50,7 +53,8 @@ class HomeDashboard extends StatelessWidget {
                     Container(
                       width: 68,
                       height: 44,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(14),
@@ -69,16 +73,19 @@ class HomeDashboard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.92),
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: Colors.black.withOpacity(0.04)),
+                        border:
+                            Border.all(color: Colors.black.withOpacity(0.04)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.auto_stories_rounded, size: 16, color: accentColor),
+                          Icon(Icons.auto_stories_rounded,
+                              size: 16, color: accentColor),
                           const SizedBox(width: 8),
                           Text(
                             'Home',
@@ -114,7 +121,8 @@ class HomeDashboard extends StatelessWidget {
                     context,
                     eyebrow: 'Quick access',
                     title: 'Keep your study rhythm simple',
-                    subtitle: 'Jump into your notes, prayer support, and this month\'s study path without hunting through the app.',
+                    subtitle:
+                        'Jump into your notes, the Bible, and this month\'s study path without hunting through the app.',
                   ),
                   const SizedBox(height: 18),
                   Row(
@@ -128,21 +136,23 @@ class HomeDashboard extends StatelessWidget {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const ReflectionsScreen()),
+                            MaterialPageRoute(
+                                builder: (_) => const ReflectionsScreen()),
                           );
                         },
                       ),
                       const SizedBox(width: 16),
                       _buildActionItem(
                         context,
-                        icon: Icons.volunteer_activism_rounded,
-                        label: 'Prayer Requests',
-                        description: 'Share requests and stay prayerful.',
+                        icon: Icons.menu_book_rounded,
+                        label: 'Bible',
+                        description: 'Open Scripture while studying.',
                         color: accentColor,
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const PrayerRequestScreen()),
+                            MaterialPageRoute(
+                                builder: (_) => const BibleScreen()),
                           );
                         },
                       ),
@@ -153,18 +163,22 @@ class HomeDashboard extends StatelessWidget {
                     context,
                     eyebrow: 'Manual overview',
                     title: 'Move through the year with confidence',
-                    subtitle: 'Each month opens into detailed lessons, memory verses, and practical study sessions.',
+                    subtitle:
+                        'Each month opens into detailed lessons, memory verses, and practical study sessions.',
                   ),
                   const SizedBox(height: 18),
                   _buildCurriculumSnapshot(context),
                   const SizedBox(height: 34),
-                  _buildGuidancePanel(context, currentMonth: currentMonth, remainingLessons: remainingLessons),
+                  _buildGuidancePanel(context,
+                      currentMonth: currentMonth,
+                      remainingLessons: remainingLessons),
                   const SizedBox(height: 34),
                   _buildSectionHeading(
                     context,
                     eyebrow: 'About this app',
                     title: 'A digital companion to the 2026 Bible Study Manual',
-                    subtitle: 'Built to present the manual in a clean, accessible format for personal study, class preparation, reflection, and prayer.',
+                    subtitle:
+                        'Built to present the manual in a clean, accessible format for personal study, class preparation, Bible reading, and reflection.',
                   ),
                   const SizedBox(height: 16),
                   _buildPurposeCard(context),
@@ -235,7 +249,8 @@ class HomeDashboard extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => MonthDetailScreen(month: currentMonth)),
+          MaterialPageRoute(
+              builder: (_) => MonthDetailScreen(month: currentMonth)),
         );
       },
       child: Container(
@@ -283,14 +298,16 @@ class HomeDashboard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: accentColor.withOpacity(0.18),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     'CURRENT MONTH',
-                    style: theme.textTheme.labelSmall?.copyWith(color: Colors.white),
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: Colors.white),
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -321,7 +338,8 @@ class HomeDashboard extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(18),
@@ -330,11 +348,13 @@ class HomeDashboard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.menu_book_rounded, size: 18, color: accentColor),
+                      Icon(Icons.menu_book_rounded,
+                          size: 18, color: accentColor),
                       const SizedBox(width: 8),
                       Text(
                         '${currentMonth.lessons.length} lesson${currentMonth.lessons.length == 1 ? '' : 's'} ready',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -357,19 +377,20 @@ class HomeDashboard extends StatelessWidget {
     final theme = Theme.of(context);
     final primaryColor = theme.primaryColor;
     final accentColor = theme.colorScheme.secondary;
-    final progress = totalLessons == 0 ? 0.0 : (studiedCount / totalLessons).clamp(0.0, 1.0);
+    final progress =
+        totalLessons == 0 ? 0.0 : (studiedCount / totalLessons).clamp(0.0, 1.0);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFFF7F2FC),
+            Color(0xFFF7F2FC),
             Colors.white,
-            const Color(0xFFFFF8E1),
+            Color(0xFFFFF8E1),
           ],
         ),
         borderRadius: BorderRadius.circular(34),
@@ -400,7 +421,7 @@ class HomeDashboard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'A clearer place to start your week: open the current month, keep track of studied lessons, and stay anchored in prayer and reflection.',
+            'A clearer place to start your week: open the current month, keep track of studied lessons, and stay anchored in Scripture and reflection.',
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.7),
           ),
           const SizedBox(height: 24),
@@ -449,7 +470,8 @@ class HomeDashboard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Your current study progress',
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
                     Text(
@@ -498,7 +520,8 @@ class HomeDashboard extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           title,
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style:
+              theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
@@ -610,14 +633,20 @@ class HomeDashboard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 description,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.6),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(height: 1.6),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
                   Text(
                     'Open',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelMedium
+                        ?.copyWith(color: color),
                   ),
                   const SizedBox(width: 6),
                   Icon(Icons.arrow_forward_rounded, size: 16, color: color),
@@ -642,7 +671,8 @@ class HomeDashboard extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => MonthDetailScreen(month: month)),
+                MaterialPageRoute(
+                    builder: (_) => MonthDetailScreen(month: month)),
               );
             },
             child: Container(
@@ -672,8 +702,8 @@ class HomeDashboard extends StatelessWidget {
                     child: Text(
                       month.month.substring(0, 3).toUpperCase(),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).primaryColor,
-                      ),
+                            color: Theme.of(context).primaryColor,
+                          ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -683,23 +713,30 @@ class HomeDashboard extends StatelessWidget {
                       children: [
                         Text(
                           month.month,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: Theme.of(context).primaryColor,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                  ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           month.topic,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          month.centralTruth.isNotEmpty ? month.centralTruth : '${month.lessons.length} lessons',
+                          month.centralTruth.isNotEmpty
+                              ? month.centralTruth
+                              : '${month.lessons.length} lessons',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(height: 1.5),
                         ),
                       ],
                     ),
@@ -763,7 +800,8 @@ class HomeDashboard extends StatelessWidget {
                     color: Colors.white.withOpacity(0.14),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.track_changes_rounded, color: Colors.white),
+                  child: const Icon(Icons.track_changes_rounded,
+                      color: Colors.white),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -799,23 +837,29 @@ class HomeDashboard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.auto_stories_rounded, color: Theme.of(context).primaryColor),
+              Icon(Icons.auto_stories_rounded,
+                  color: Theme.of(context).primaryColor),
               const SizedBox(width: 10),
               Text(
                 'About FaithFoundation',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 14),
           Text(
-            'FaithFoundation is the digital edition of the Opened Heavens Chapel Bible Study Manual 2026. It presents the Sunday School Department publication in a simple and orderly experience, helping members and teachers move through each month, follow every lesson outline, reflect on key truths, and stay engaged in prayer.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.7),
+            'FaithFoundation is the digital edition of the Opened Heavens Chapel Bible Study Manual 2026. It presents the Sunday School Department publication in a simple and orderly experience, helping members and teachers move through each month, follow every lesson outline, read Scripture, and reflect on key truths.',
+            style:
+                Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.7),
           ),
           const SizedBox(height: 14),
           Text(
             'The app is designed to support consistent Bible study with clarity and reverence, while keeping the emphasis on Scripture, spiritual growth, and faithful participation in the life of the church.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.7),
+            style:
+                Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.7),
           ),
           const SizedBox(height: 16),
           Container(
@@ -824,7 +868,8 @@ class HomeDashboard extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFF7F2FC),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.08)),
+              border: Border.all(
+                  color: Theme.of(context).primaryColor.withOpacity(0.08)),
             ),
             child: Text(
               'THIS PUBLICATION IS THE PRODUCT OF THE SUNDAY SCHOOL DEPARTMENT, ASSEMBLIES OF GOD NIGERIA.',

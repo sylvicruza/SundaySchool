@@ -71,6 +71,8 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                   return;
                 }
 
+                final navigator = Navigator.of(dialogContext);
+                final messenger = ScaffoldMessenger.of(context);
                 final note = ReflectionNote(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   title: title,
@@ -84,9 +86,9 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                   return;
                 }
 
-                Navigator.pop(dialogContext);
+                navigator.pop();
                 _loadReflections();
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(content: Text('Reflection saved.')),
                 );
               },
@@ -278,7 +280,8 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.menu_book_rounded, color: Theme.of(context).primaryColor),
+              Icon(Icons.menu_book_rounded,
+                  color: Theme.of(context).primaryColor),
               const SizedBox(width: 10),
               Text(
                 'Study Reminder',

@@ -12,7 +12,8 @@ class OnboardingScreen extends StatelessWidget {
       fit: BoxFit.contain,
       color: color,
       colorBlendMode: BlendMode.srcIn,
-      errorBuilder: (context, error, stackTrace) => Icon(Icons.church, color: color, size: 18),
+      errorBuilder: (context, error, stackTrace) =>
+          Icon(Icons.church, color: color, size: 18),
     );
   }
 
@@ -20,9 +21,9 @@ class OnboardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color primaryColor = Theme.of(context).primaryColor;
     final Color accentColor = Theme.of(context).colorScheme.secondary;
-    
+
     const String heroImagePath = 'assets/images/onboarding_hero.png';
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -34,11 +35,12 @@ class OnboardingScreen extends StatelessWidget {
               child: Image.asset(
                 heroImagePath,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(color: primaryColor.withOpacity(0.1)),
+                errorBuilder: (context, error, stackTrace) =>
+                    Container(color: primaryColor.withOpacity(0.1)),
               ),
             ),
           ),
-          
+
           // Gradient Overlay
           Positioned.fill(
             child: Container(
@@ -56,10 +58,11 @@ class OnboardingScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -68,12 +71,15 @@ class OnboardingScreen extends StatelessWidget {
                       Container(
                         width: 92,
                         height: 64,
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 10),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(32),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)
+                            BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10)
                           ],
                         ),
                         child: ClipRRect(
@@ -87,38 +93,35 @@ class OnboardingScreen extends StatelessWidget {
                           'Opened Heavens Chapel',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.6,
-                            fontSize: 15,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.6,
+                                    fontSize: 15,
+                                  ),
                         ),
                       ),
                     ],
                   ),
-                  
                   const Spacer(),
-                  
                   Text(
                     _manualTitle,
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: Colors.white,
-                      height: 1.0,
-                      fontSize: 40,
-                    ),
+                          color: Colors.white,
+                          height: 1.0,
+                          fontSize: 40,
+                        ),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Study the 2026 Sunday School manual from Opened Heavens Chapel, open each month, read each lesson, write reflections, and send prayer requests.',
+                    'Study the 2026 Sunday School manual from Opened Heavens Chapel, open each month, read each lesson, follow Scripture, and write reflections.',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.white.withOpacity(0.8),
-                      height: 1.6,
-                    ),
+                          color: Colors.white.withOpacity(0.8),
+                          height: 1.6,
+                        ),
                   ),
-                  
                   const SizedBox(height: 48),
-                  
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -140,9 +143,7 @@ class OnboardingScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
                   const SizedBox(height: 16),
-                  
                   SizedBox(
                     width: double.infinity,
                     child: TextButton(
@@ -150,15 +151,16 @@ class OnboardingScreen extends StatelessWidget {
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         side: const BorderSide(color: Colors.white30, width: 1),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(32)),
                       ),
                       child: const Text(
                         'Continue',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
-                  
                   const SizedBox(height: 32),
                 ],
               ),

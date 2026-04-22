@@ -18,7 +18,7 @@ jobs:
       JAVA_VERSION: "17"
       FLUTTER_VERSION: "3.22.3"
       PACKAGE_NAME: "com.openedheavens.sundayschool"
-      PLAY_TRACK: "beta"
+      PLAY_TRACK: "alpha"
 
     steps:
       - name: Checkout repository
@@ -117,7 +117,7 @@ jobs:
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           debugSymbols: ${{ steps.debug_symbols.outputs.zip_path }}
           whatsNewDirectory: distribution/whatsnew
-          track: ${{ env.PLAY_TRACK }}
+          tracks: ${{ env.PLAY_TRACK }}
           releaseName: FaithFoundation ${{ steps.version_name.outputs.value }} (${{ steps.build_number.outputs.value }})
           status: completed
 
@@ -129,6 +129,6 @@ jobs:
           packageName: ${{ env.PACKAGE_NAME }}
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           whatsNewDirectory: distribution/whatsnew
-          track: ${{ env.PLAY_TRACK }}
+          tracks: ${{ env.PLAY_TRACK }}
           releaseName: FaithFoundation ${{ steps.version_name.outputs.value }} (${{ steps.build_number.outputs.value }})
           status: completed

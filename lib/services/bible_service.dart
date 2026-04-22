@@ -22,10 +22,14 @@ class BibleTranslation {
 }
 
 class BibleVerse {
+  final String? bookName;
+  final int? chapter;
   final int verse;
   final String text;
 
   const BibleVerse({
+    this.bookName,
+    this.chapter,
     required this.verse,
     required this.text,
   });
@@ -148,6 +152,21 @@ class BibleService {
     BibleBook('Revelation', 22),
   ];
 
+  static BibleBook? findBook(String name) {
+    final String normalized = _normalizeBookName(name);
+    for (final BibleBook book in books) {
+      if (_normalizeBookName(book.name) == normalized) {
+        return book;
+      }
+    }
+    return null;
+  }
+
+  static String _normalizeBookName(String name) {
+    final String normalized = name.trim().toLowerCase();
+    return normalized == 'psalm' ? 'psalms' : normalized;
+  }
+
   final Map<String, BiblePassage> _cache = <String, BiblePassage>{};
 
   Future<BiblePassage> fetchPassage(
@@ -188,6 +207,8 @@ class BibleService {
       verses: rawVerses.map((dynamic item) {
         final Map<String, dynamic> verse = item as Map<String, dynamic>;
         return BibleVerse(
+          bookName: verse['book_name']?.toString(),
+          chapter: verse['chapter'] as int?,
           verse: verse['verse'] as int,
           text: verse['text']?.toString().trim() ?? '',
         );

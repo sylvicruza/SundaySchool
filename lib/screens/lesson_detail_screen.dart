@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../models/curriculum.dart';
 import '../services/data_service.dart';
 import 'reflections_screen.dart';
 
 class LessonDetailScreen extends StatefulWidget {
-  final LessonData lesson;
-  const LessonDetailScreen({super.key, required this.lesson});
+  final MonthData month;
+  final int lessonIndex;
+
+  const LessonDetailScreen({
+    super.key,
+    required this.month,
+    required this.lessonIndex,
+  });
 
   @override
   State<LessonDetailScreen> createState() => _LessonDetailScreenState();
@@ -16,12 +23,35 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   bool _isStudied = false;
   bool _isBookmarked = false;
 
+  LessonData get _lesson => widget.month.lessons[widget.lessonIndex];
+  bool get _hasPreviousLesson => widget.lessonIndex > 0;
+  bool get _hasNextLesson => widget.lessonIndex < widget.month.lessons.length - 1;
+
   @override
   void initState() {
     super.initState();
-    final dataService = DataService();
-    _isStudied = dataService.isLessonStudied(widget.lesson);
-    _isBookmarked = dataService.isLessonBookmarked(widget.lesson);
+    _syncLessonState();
+    _persistLastOpenedLesson();
+  }
+
+  @override
+  void didUpdateWidget(covariant LessonDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.lessonIndex != widget.lessonIndex ||
+        oldWidget.month.month != widget.month.month) {
+      _syncLessonState();
+      _persistLastOpenedLesson();
+    }
+  }
+
+  void _syncLessonState() {
+    final DataService dataService = DataService();
+    _isStudied = dataService.isLessonStudied(_lesson);
+    _isBookmarked = dataService.isLessonBookmarked(_lesson);
+  }
+
+  Future<void> _persistLastOpenedLesson() async {
+    await DataService().saveLastOpenedLesson(month: widget.month, lesson: _lesson);
   }
 
   Widget _buildLogo(Color color) {
@@ -30,16 +60,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       width: 24,
       height: 24,
       fit: BoxFit.contain,
-      errorBuilder: (ctx, err, stack) => Icon(Icons.church, size: 20, color: color),
+      errorBuilder: (ctx, err, stack) =>
+          Icon(Icons.church, size: 20, color: color),
     );
   }
 
   String get _shareText {
-    return '${widget.lesson.dateTitle}\n\n${widget.lesson.content.trim()}';
+    return '${_lesson.dateTitle}\n\n${_lesson.content.trim()}';
   }
 
   Future<void> _toggleStudied() async {
-    final bool value = await DataService().toggleLessonStudied(widget.lesson);
+    final bool value = await DataService().toggleLessonStudied(_lesson);
     if (!mounted) {
       return;
     }
@@ -48,11 +79,13 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       _isStudied = value;
     });
 
-    _showNotice(value ? 'Lesson marked as studied.' : 'Lesson removed from studied.');
+    _showNotice(
+      value ? 'Lesson marked as studied.' : 'Lesson removed from studied.',
+    );
   }
 
   Future<void> _toggleBookmark() async {
-    final bool value = await DataService().toggleLessonBookmark(widget.lesson);
+    final bool value = await DataService().toggleLessonBookmark(_lesson);
     if (!mounted) {
       return;
     }
@@ -61,7 +94,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       _isBookmarked = value;
     });
 
-    _showNotice(value ? 'Lesson saved to bookmarks.' : 'Lesson removed from bookmarks.');
+    _showNotice(
+      value ? 'Lesson saved to bookmarks.' : 'Lesson removed from bookmarks.',
+    );
   }
 
   Future<void> _copyLessonForShare() async {
@@ -73,7 +108,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   void _openReflections() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const ReflectionsScreen()));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ReflectionsScreen()),
+    );
   }
 
   void _showNotice(String message) {
@@ -97,7 +135,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               children: [
                 ListTile(
                   leading: Icon(
-                    _isStudied ? Icons.check_circle_rounded : Icons.check_circle_outline_rounded,
+                    _isStudied
+                        ? Icons.check_circle_rounded
+                        : Icons.check_circle_outline_rounded,
                   ),
                   title: Text(_isStudied ? 'Remove studied mark' : 'Mark as studied'),
                   onTap: () {
@@ -107,7 +147,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 ),
                 ListTile(
                   leading: Icon(
-                    _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+                    _isBookmarked
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_outline_rounded,
                   ),
                   title: Text(_isBookmarked ? 'Remove bookmark' : 'Save bookmark'),
                   onTap: () {
@@ -139,16 +181,27 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
+  void _navigateToLesson(int targetIndex) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LessonDetailScreen(
+          month: widget.month,
+          lessonIndex: targetIndex,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).primaryColor;
-    final accentColor = Theme.of(context).colorScheme.secondary;
-    
+    final Color primaryColor = Theme.of(context).primaryColor;
+    final Color accentColor = Theme.of(context).colorScheme.secondary;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
-          // Premium Minimalist AppBar
           SliverAppBar(
             expandedHeight: 100,
             floating: true,
@@ -156,7 +209,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
             elevation: 0,
             backgroundColor: Colors.white,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios_new_rounded, color: primaryColor, size: 20),
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: primaryColor,
+                size: 20,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             title: Row(
@@ -166,27 +223,24 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 const SizedBox(width: 8),
                 Text(
                   'LESSON STUDY',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 2.0),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(letterSpacing: 2.0),
                 ),
               ],
             ),
             actions: [
               IconButton(
                 icon: Icon(Icons.share_outlined, color: primaryColor, size: 20),
-                onPressed: () {
-                  _copyLessonForShare();
-                },
+                onPressed: _copyLessonForShare,
               ),
               IconButton(
                 icon: Icon(Icons.more_vert_rounded, color: primaryColor, size: 20),
-                onPressed: () {
-                  _openMoreOptions();
-                },
+                onPressed: _openMoreOptions,
               ),
               const SizedBox(width: 8),
             ],
           ),
-          
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -194,81 +248,89 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  // Lesson Header
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: accentColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          '2026 MANUAL',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
+                          widget.month.month.toUpperCase(),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.labelSmall?.copyWith(fontSize: 9),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'SPIRITUAL GROWTH',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9, color: Colors.grey),
+                        'LESSON ${widget.lessonIndex + 1} OF ${widget.month.lessons.length}',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              fontSize: 9,
+                              color: Colors.grey,
+                            ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    widget.lesson.dateTitle,
+                    _lesson.dateTitle,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: primaryColor,
-                      fontSize: 28,
-                      height: 1.2,
-                    ),
+                          color: primaryColor,
+                          fontSize: 28,
+                          height: 1.2,
+                        ),
                   ),
+                  const SizedBox(height: 24),
+                  _buildLessonPager(context),
                   const SizedBox(height: 32),
-                  
-                  // Interactive Actions
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       ElevatedButton.icon(
-                        onPressed: () {
-                          _toggleStudied();
-                        },
+                        onPressed: _toggleStudied,
                         icon: Icon(
-                          _isStudied ? Icons.check_circle_rounded : Icons.check_circle_outline_rounded,
+                          _isStudied
+                              ? Icons.check_circle_rounded
+                              : Icons.check_circle_outline_rounded,
                           size: 18,
                         ),
                         label: Text(_isStudied ? 'Studied' : 'Mark as Studied'),
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
                           elevation: 0,
                           backgroundColor: _isStudied ? accentColor : primaryColor,
                         ),
                       ),
-                      _buildToolbarButton(context, Icons.edit_note_rounded, _openReflections),
                       _buildToolbarButton(
                         context,
-                        _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
-                        () {
-                          _toggleBookmark();
-                        },
+                        Icons.edit_note_rounded,
+                        _openReflections,
+                      ),
+                      _buildToolbarButton(
+                        context,
+                        _isBookmarked
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_outline_rounded,
+                        _toggleBookmark,
                       ),
                     ],
                   ),
-                  
                   const SizedBox(height: 40),
                   const Divider(height: 1, color: Color(0xFFEEEEEE)),
                   const SizedBox(height: 40),
-                  
-                  _buildLessonContent(context, widget.lesson.content),
-                  
+                  _buildLessonContent(context, _lesson.content),
                   const SizedBox(height: 60),
-                  
-                  // Reflection Section
                   _buildReflectionPrompt(context),
-                  
                   const SizedBox(height: 100),
                 ],
               ),
@@ -279,7 +341,47 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
-  Widget _buildToolbarButton(BuildContext context, IconData icon, VoidCallback onTap) {
+  Widget _buildLessonPager(BuildContext context) {
+    final Color primaryColor = Theme.of(context).primaryColor;
+
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: _hasPreviousLesson
+                ? () => _navigateToLesson(widget.lessonIndex - 1)
+                : null,
+            icon: const Icon(Icons.chevron_left_rounded),
+            label: const Text('Previous Lesson'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: primaryColor,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: _hasNextLesson
+                ? () => _navigateToLesson(widget.lessonIndex + 1)
+                : null,
+            icon: const Icon(Icons.chevron_right_rounded),
+            label: const Text('Next Lesson'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: primaryColor,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildToolbarButton(
+    BuildContext context,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -308,7 +410,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome_rounded, color: Theme.of(context).colorScheme.secondary, size: 24),
+              Icon(
+                Icons.auto_awesome_rounded,
+                color: Theme.of(context).colorScheme.secondary,
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -347,15 +453,20 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   Widget _buildLessonContent(BuildContext context, String content) {
-    final List<Widget> children = [];
+    final List<Widget> children = <Widget>[];
     final Color primaryColor = Theme.of(context).primaryColor;
     final Color accentColor = Theme.of(context).colorScheme.secondary;
-    final TextStyle bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontSize: 15,
-          height: 1.7,
-          color: const Color(0xFF2C2C2C),
-        ) ??
-        const TextStyle(fontSize: 15, height: 1.7, color: Color(0xFF2C2C2C));
+    final TextStyle bodyStyle =
+        Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontSize: 15,
+              height: 1.7,
+              color: const Color(0xFF2C2C2C),
+            ) ??
+            const TextStyle(
+              fontSize: 15,
+              height: 1.7,
+              color: Color(0xFF2C2C2C),
+            );
 
     for (final String rawLine in content.split('\n')) {
       final String line = rawLine.trimRight();
@@ -366,79 +477,104 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
       final String trimmed = line.trimLeft();
       if (trimmed.startsWith('#### ')) {
-        children.add(_buildSelectableBlock(
-          trimmed.substring(5),
-          Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: primaryColor,
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-              ),
-        ));
+        children.add(
+          _buildSelectableBlock(
+            trimmed.substring(5),
+            Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: primaryColor,
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+        );
         continue;
       }
       if (trimmed.startsWith('### ')) {
-        children.add(_buildSelectableBlock(
-          trimmed.substring(4),
-          Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: primaryColor,
-                fontSize: 20,
-              ),
-        ));
+        children.add(
+          _buildSelectableBlock(
+            trimmed.substring(4),
+            Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: primaryColor,
+                  fontSize: 20,
+                ),
+          ),
+        );
         continue;
       }
       if (trimmed.startsWith('## ')) {
-        children.add(_buildSelectableBlock(
-          trimmed.substring(3),
-          Theme.of(context).textTheme.headlineMedium?.copyWith(color: primaryColor),
-        ));
+        children.add(
+          _buildSelectableBlock(
+            trimmed.substring(3),
+            Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(color: primaryColor),
+          ),
+        );
         continue;
       }
       if (trimmed.startsWith('# ')) {
-        children.add(_buildSelectableBlock(
-          trimmed.substring(2),
-          Theme.of(context).textTheme.headlineLarge?.copyWith(color: primaryColor),
-        ));
+        children.add(
+          _buildSelectableBlock(
+            trimmed.substring(2),
+            Theme.of(context)
+                .textTheme
+                .headlineLarge
+                ?.copyWith(color: primaryColor),
+          ),
+        );
         continue;
       }
       if (trimmed.startsWith('> ')) {
-        children.add(Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border(left: BorderSide(color: accentColor, width: 4)),
+        children.add(
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border(left: BorderSide(color: accentColor, width: 4)),
+            ),
+            child: SelectableText(
+              trimmed.substring(2),
+              style: bodyStyle.copyWith(
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           ),
-          child: SelectableText(
-            trimmed.substring(2),
-            style: bodyStyle.copyWith(color: Colors.grey, fontStyle: FontStyle.italic),
-          ),
-        ));
+        );
         continue;
       }
       if (_isBullet(trimmed)) {
-        children.add(Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 6, right: 10),
-                child: Text(
-                  '•',
-                  style: TextStyle(color: accentColor, fontWeight: FontWeight.bold, fontSize: 16),
+        children.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, right: 10),
+                  child: Text(
+                    '•',
+                    style: TextStyle(
+                      color: accentColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: SelectableText(
-                  _bulletText(trimmed),
-                  style: bodyStyle,
+                Expanded(
+                  child: SelectableText(
+                    _bulletText(trimmed),
+                    style: bodyStyle,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ));
+        );
         continue;
       }
 
@@ -476,10 +612,22 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
 
   String _stripInlineMarkdown(String text) {
     return text
-        .replaceAllMapped(RegExp(r'\*\*(.*?)\*\*'), (match) => match.group(1) ?? '')
-        .replaceAllMapped(RegExp(r'__(.*?)__'), (match) => match.group(1) ?? '')
-        .replaceAllMapped(RegExp(r'`(.*?)`'), (match) => match.group(1) ?? '')
-        .replaceAllMapped(RegExp(r'\[(.*?)\]\((.*?)\)'), (match) => match.group(1) ?? '')
+        .replaceAllMapped(
+          RegExp(r'\*\*(.*?)\*\*'),
+          (match) => match.group(1) ?? '',
+        )
+        .replaceAllMapped(
+          RegExp(r'__(.*?)__'),
+          (match) => match.group(1) ?? '',
+        )
+        .replaceAllMapped(
+          RegExp(r'`(.*?)`'),
+          (match) => match.group(1) ?? '',
+        )
+        .replaceAllMapped(
+          RegExp(r'\[(.*?)\]\((.*?)\)'),
+          (match) => match.group(1) ?? '',
+        )
         .trim();
   }
 }

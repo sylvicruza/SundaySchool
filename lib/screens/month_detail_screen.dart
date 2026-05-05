@@ -194,7 +194,15 @@ class MonthDetailScreen extends StatelessWidget {
 
   Widget _buildLessonItem(BuildContext context, LessonData lesson, int weekNum) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LessonDetailScreen(lesson: lesson))),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LessonDetailScreen(
+            month: month,
+            lessonIndex: weekNum - 1,
+          ),
+        ),
+      ),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(

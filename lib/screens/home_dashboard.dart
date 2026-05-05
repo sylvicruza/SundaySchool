@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/curriculum.dart';
 import '../services/data_service.dart';
 import 'bible_screen.dart';
+import 'lesson_detail_screen.dart';
 import 'month_detail_screen.dart';
 import 'reflections_screen.dart';
 
@@ -116,6 +117,8 @@ class HomeDashboard extends StatelessWidget {
                     totalLessons: totalLessons,
                     remainingLessons: remainingLessons,
                   ),
+                  const SizedBox(height: 24),
+                  _buildResumeCard(context),
                   const SizedBox(height: 28),
                   _buildSectionHeading(
                     context,
@@ -529,6 +532,112 @@ class HomeDashboard extends StatelessWidget {
           style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
         ),
       ],
+    );
+  }
+
+  Widget _buildResumeCard(BuildContext context) {
+    final ResolvedLessonLocation? lastLesson =
+        DataService().resolveLastOpenedLesson();
+    final LastOpenedBibleState? lastBible = DataService().getLastOpenedBibleState();
+    final Color primaryColor = Theme.of(context).primaryColor;
+
+    if (lastLesson == null && lastBible == null) {
+      return const SizedBox.shrink();
+    }
+
+    final String title;
+    final String subtitle;
+    final VoidCallback onTap;
+    final IconData icon;
+
+    if (lastLesson != null) {
+      title = 'Continue your lesson';
+      subtitle = '${lastLesson.month.month}: ${lastLesson.lesson.dateTitle}';
+      icon = Icons.menu_book_rounded;
+      onTap = () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LessonDetailScreen(
+              month: lastLesson.month,
+              lessonIndex: lastLesson.lessonIndex,
+            ),
+          ),
+        );
+      };
+    } else {
+      title = 'Return to your Bible reading';
+      subtitle =
+          '${lastBible!.reference} • ${lastBible.translationCode.toUpperCase()}';
+      icon = Icons.bookmarks_rounded;
+      onTap = () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BibleScreen(
+              initialReference: lastBible.reference,
+              initialTranslationCode: lastBible.translationCode,
+            ),
+          ),
+        );
+      };
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.black.withOpacity(0.04)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(icon, color: primaryColor),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          height: 1.5,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_rounded, color: primaryColor),
+          ],
+        ),
+      ),
     );
   }
 

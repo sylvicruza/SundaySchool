@@ -1,5 +1,5 @@
 name: faithfoundation
-description: "FaithFoundation is the digital edition of the Opened Heavens Chapel Bible Study Manual 2026, created to support structured Bible study, reflection, and prayer."
+description: "FaithFoundation is the digital edition of the Opened Heavens Chapel Bible Study Manual 2026, created to support structured Bible study, reflection, and Sunday School study."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -38,6 +38,7 @@ dependencies:
   google_fonts: ^6.3.0
   http: ^1.6.0
   share_plus: 10.1.4
+  shared_preferences: ^2.3.3
 
 dev_dependencies:
   flutter_test:

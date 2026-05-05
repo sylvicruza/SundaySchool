@@ -13,6 +13,19 @@ class SundaySchoolScreen extends StatefulWidget {
 
 class _SundaySchoolScreenState extends State<SundaySchoolScreen> {
   static const String _manualTitle = 'Faith Foundations Manual';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Widget _buildLogo(Color color) {
     return Image.asset(
@@ -30,9 +43,9 @@ class _SundaySchoolScreenState extends State<SundaySchoolScreen> {
     final primaryColor = theme.primaryColor;
     final accentColor = theme.colorScheme.secondary;
     final curriculum = DataService().curriculum;
-    final months = (curriculum?.months ?? const <MonthData>[])
+    final months = _filterMonths((curriculum?.months ?? const <MonthData>[])
         .where((month) => month.topic.trim().isNotEmpty || month.lessons.isNotEmpty)
-        .toList();
+        .toList());
     final loadError = DataService().curriculumLoadError;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -183,6 +196,20 @@ class _SundaySchoolScreenState extends State<SundaySchoolScreen> {
                     subtitle:
                         'Each month has a clear topic, supporting lessons, and a direct path into deeper study.',
                   ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search months, topics, or lesson titles',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: _searchController.text.trim().isEmpty
+                          ? null
+                          : IconButton(
+                              onPressed: () => _searchController.clear(),
+                              icon: const Icon(Icons.close_rounded),
+                            ),
+                    ),
+                  ),
                   const SizedBox(height: 18),
                 ],
               ),
@@ -209,7 +236,11 @@ class _SundaySchoolScreenState extends State<SundaySchoolScreen> {
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(40),
-                  child: Text(loadError ?? 'Manual data not found.'),
+                  child: Text(
+                    _searchController.text.trim().isNotEmpty
+                        ? 'No study sessions match your search.'
+                        : loadError ?? 'Manual data not found.',
+                  ),
                 ),
               ),
             ),
@@ -243,6 +274,22 @@ class _SundaySchoolScreenState extends State<SundaySchoolScreen> {
         ),
       ],
     );
+  }
+
+  List<MonthData> _filterMonths(List<MonthData> months) {
+    final String query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      return months;
+    }
+
+    return months.where((MonthData month) {
+      final bool matchesMonth = month.month.toLowerCase().contains(query);
+      final bool matchesTopic = month.topic.toLowerCase().contains(query);
+      final bool matchesLesson = month.lessons.any(
+        (LessonData lesson) => lesson.dateTitle.toLowerCase().contains(query),
+      );
+      return matchesMonth || matchesTopic || matchesLesson;
+    }).toList();
   }
 
   Widget _buildMonthCard(BuildContext context, MonthData month, int index) {

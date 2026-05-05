@@ -3,11 +3,21 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../models/curriculum.dart';
-import '../services/data_service.dart';
 import '../services/bible_service.dart';
+import '../services/data_service.dart';
+import 'saved_scriptures_screen.dart';
 
 class BibleScreen extends StatefulWidget {
-  const BibleScreen({super.key});
+  final String? initialReference;
+  final String? initialTranslationCode;
+  final SavedBiblePassage? initialPassageSnapshot;
+
+  const BibleScreen({
+    super.key,
+    this.initialReference,
+    this.initialTranslationCode,
+    this.initialPassageSnapshot,
+  });
 
   @override
   State<BibleScreen> createState() => _BibleScreenState();
@@ -15,20 +25,48 @@ class BibleScreen extends StatefulWidget {
 
 class _BibleScreenState extends State<BibleScreen> {
   final BibleService _bibleService = BibleService();
-  final TextEditingController _searchController =
-      TextEditingController(text: 'John 2');
+  late final TextEditingController _searchController;
+
   BibleBook _selectedBook = BibleService.books[42];
   BibleTranslation _selectedTranslation = BibleService.translations.first;
   int _selectedChapter = 2;
-  String _activeReference = 'John 2';
-  final Set<String> _bookmarkedPassages = <String>{};
-  final Set<String> _bookmarkedVerses = <String>{};
+  late String _activeReference;
   late Future<BiblePassage> _passageFuture;
+  Set<String> _bookmarkedPassages = <String>{};
+  Set<String> _bookmarkedVerses = <String>{};
+  SavedBiblePassage? _offlineFallback;
 
   @override
   void initState() {
     super.initState();
+    final LastOpenedBibleState? lastState =
+        widget.initialReference == null && widget.initialTranslationCode == null
+            ? DataService().getLastOpenedBibleState()
+            : null;
+
+    _selectedTranslation = BibleService.findTranslationByCode(
+      widget.initialTranslationCode ?? lastState?.translationCode ?? 'kjv',
+    );
+    _activeReference = widget.initialReference ?? lastState?.reference ?? 'John 2';
+    _offlineFallback = widget.initialPassageSnapshot;
+
+    final BibleBook? restoredBook = BibleService.findBook(
+      lastState?.bookName ?? 'John',
+    );
+    if (restoredBook != null) {
+      _selectedBook = restoredBook;
+      _selectedChapter = (lastState?.chapter ?? 2).clamp(1, restoredBook.chapters);
+    } else {
+      final BibleBook? derivedBook = _deriveBookFromReference(_activeReference);
+      if (derivedBook != null) {
+        _selectedBook = derivedBook;
+        _selectedChapter = _deriveChapterFromReference(_activeReference) ?? 2;
+      }
+    }
+
+    _searchController = TextEditingController(text: _activeReference);
     _searchController.addListener(() => setState(() {}));
+    _loadSavedKeys();
     _passageFuture = _loadSelectedReference();
   }
 
@@ -38,16 +76,101 @@ class _BibleScreenState extends State<BibleScreen> {
     super.dispose();
   }
 
-  Future<BiblePassage> _loadSelectedReference() {
-    return _bibleService
-        .fetchPassage(
-      _activeReference,
-      translation: _selectedTranslation,
-    )
-        .then((BiblePassage passage) {
+  void _loadSavedKeys() {
+    _bookmarkedPassages = DataService()
+        .getSavedBiblePassages()
+        .map((SavedBiblePassage item) => item.key)
+        .toSet();
+    _bookmarkedVerses = DataService()
+        .getSavedBibleVerses()
+        .map((SavedBibleVerse item) => item.key)
+        .toSet();
+  }
+
+  BibleBook? _deriveBookFromReference(String reference) {
+    final String trimmed = reference.trim();
+    for (final BibleBook book in BibleService.books) {
+      if (trimmed.toLowerCase().startsWith(book.name.toLowerCase())) {
+        return book;
+      }
+    }
+    return null;
+  }
+
+  int? _deriveChapterFromReference(String reference) {
+    final Match? match = RegExp(r'(\d+)(?::\d+)?$').firstMatch(reference.trim());
+    return match == null ? null : int.tryParse(match.group(1)!);
+  }
+
+  Future<BiblePassage> _loadSelectedReference() async {
+    try {
+      final BiblePassage passage = await _bibleService.fetchPassage(
+        _activeReference,
+        translation: _selectedTranslation,
+      );
       _syncSelectionFromPassage(passage);
+      _persistLastOpenedBible(passage);
       return passage;
-    });
+    } catch (error) {
+      if (_offlineFallback != null &&
+          _offlineFallback!.translationCode == _selectedTranslation.code &&
+          _offlineFallback!.reference.toLowerCase() == _activeReference.toLowerCase()) {
+        final BiblePassage fallbackPassage = _savedPassageToBiblePassage(
+          _offlineFallback!,
+        );
+        _syncSelectionFromPassage(fallbackPassage);
+        _persistLastOpenedBible(fallbackPassage);
+        return fallbackPassage;
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _persistLastOpenedBible(BiblePassage passage) async {
+    final BibleVerse? firstVerse =
+        passage.verses.isNotEmpty ? passage.verses.first : null;
+    await DataService().saveLastOpenedBibleState(
+      LastOpenedBibleState(
+        reference: _activeReference,
+        translationCode: _selectedTranslation.code,
+        bookName: firstVerse?.bookName ?? _selectedBook.name,
+        chapter: firstVerse?.chapter ?? _selectedChapter,
+      ),
+    );
+  }
+
+  SavedBiblePassage _toSavedPassage(BiblePassage passage) {
+    return SavedBiblePassage(
+      key: _passageKey,
+      reference: passage.reference,
+      translationCode: _selectedTranslation.code,
+      translationName: _selectedTranslation.name,
+      translationShortName: _selectedTranslation.shortName,
+      verses: passage.verses.map((BibleVerse verse) {
+        return SavedBiblePassageVerse(
+          bookName: verse.bookName,
+          chapter: verse.chapter,
+          verse: verse.verse,
+          text: verse.text,
+        );
+      }).toList(),
+      savedAt: DateTime.now(),
+    );
+  }
+
+  BiblePassage _savedPassageToBiblePassage(SavedBiblePassage saved) {
+    return BiblePassage(
+      reference: saved.reference,
+      translation: BibleService.findTranslationByCode(saved.translationCode),
+      verses: saved.verses.map((SavedBiblePassageVerse verse) {
+        return BibleVerse(
+          bookName: verse.bookName,
+          chapter: verse.chapter,
+          verse: verse.verse,
+          text: verse.text,
+        );
+      }).toList(),
+    );
   }
 
   void _syncSelectionFromPassage(BiblePassage passage) {
@@ -74,6 +197,7 @@ class _BibleScreenState extends State<BibleScreen> {
       _selectedChapter = chapter;
       _activeReference = '${_selectedBook.name} $_selectedChapter';
       _searchController.text = _activeReference;
+      _offlineFallback = null;
       _passageFuture = _loadSelectedReference();
     });
   }
@@ -88,6 +212,7 @@ class _BibleScreenState extends State<BibleScreen> {
       _selectedChapter = _selectedChapter.clamp(1, book.chapters);
       _activeReference = '${_selectedBook.name} $_selectedChapter';
       _searchController.text = _activeReference;
+      _offlineFallback = null;
       _passageFuture = _loadSelectedReference();
     });
   }
@@ -132,13 +257,13 @@ class _BibleScreenState extends State<BibleScreen> {
       _selectedChapter = targetChapter;
       _activeReference = reference;
       _searchController.text = reference;
+      _offlineFallback = null;
       _passageFuture = _loadSelectedReference();
     });
   }
 
   bool get _canGoPreviousChapter {
-    return _selectedChapter > 1 ||
-        BibleService.books.indexOf(_selectedBook) > 0;
+    return _selectedChapter > 1 || BibleService.books.indexOf(_selectedBook) > 0;
   }
 
   bool get _canGoNextChapter {
@@ -155,8 +280,17 @@ class _BibleScreenState extends State<BibleScreen> {
     }
 
     FocusScope.of(context).unfocus();
+    final BibleBook? book = _deriveBookFromReference(reference);
+    final int? chapter = _deriveChapterFromReference(reference);
     setState(() {
       _activeReference = reference;
+      if (book != null) {
+        _selectedBook = book;
+      }
+      if (chapter != null) {
+        _selectedChapter = chapter.clamp(1, _selectedBook.chapters);
+      }
+      _offlineFallback = null;
       _passageFuture = _loadSelectedReference();
     });
   }
@@ -179,8 +313,14 @@ class _BibleScreenState extends State<BibleScreen> {
     return '${_verseReference(verse)} (${_selectedTranslation.shortName})\n${verse.text}';
   }
 
-  void _togglePassageBookmark() {
-    final bool willBookmark = !_bookmarkedPassages.contains(_passageKey);
+  Future<void> _togglePassageBookmark(BiblePassage passage) async {
+    final bool willBookmark = await DataService().toggleSavedBiblePassage(
+      _toSavedPassage(passage),
+    );
+
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       if (willBookmark) {
@@ -194,16 +334,30 @@ class _BibleScreenState extends State<BibleScreen> {
       SnackBar(
         content: Text(
           willBookmark
-              ? '$_activeReference bookmarked.'
-              : '$_activeReference removed from bookmarks.',
+              ? '${passage.reference} bookmarked.'
+              : '${passage.reference} removed from bookmarks.',
         ),
       ),
     );
   }
 
-  void _toggleBookmark(BibleVerse verse) {
+  Future<void> _toggleBookmark(BibleVerse verse) async {
     final String key = _verseKey(verse);
-    final bool willBookmark = !_bookmarkedVerses.contains(key);
+    final bool willBookmark = await DataService().toggleSavedBibleVerse(
+      SavedBibleVerse(
+        key: key,
+        reference: _verseReference(verse),
+        translationCode: _selectedTranslation.code,
+        translationName: _selectedTranslation.name,
+        translationShortName: _selectedTranslation.shortName,
+        text: verse.text,
+        savedAt: DateTime.now(),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       if (willBookmark) {
@@ -255,7 +409,8 @@ class _BibleScreenState extends State<BibleScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-          content: Text('${_verseReference(verse)} saved to Reflections.')),
+        content: Text('${_verseReference(verse)} saved to Reflections.'),
+      ),
     );
   }
 
@@ -365,7 +520,9 @@ class _BibleScreenState extends State<BibleScreen> {
                       }
 
                       return _buildVerseCard(
-                          context, passage.verses[index - 1]);
+                        context,
+                        passage.verses[index - 1],
+                      );
                     },
                   ),
                 );
@@ -404,6 +561,16 @@ class _BibleScreenState extends State<BibleScreen> {
               ),
             ],
           ),
+        ),
+        IconButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SavedScripturesScreen()),
+            );
+          },
+          icon: const Icon(Icons.bookmarks_rounded),
+          tooltip: 'Saved Scriptures',
         ),
         Container(
           width: 58,
@@ -676,7 +843,7 @@ class _BibleScreenState extends State<BibleScreen> {
     );
   }
 
-  Widget _buildChapterNavigation(BuildContext context) {
+  Widget _buildChapterNavigation(BuildContext context, BiblePassage passage) {
     final bool isPassageBookmarked = _bookmarkedPassages.contains(_passageKey);
 
     return Row(
@@ -695,7 +862,7 @@ class _BibleScreenState extends State<BibleScreen> {
           width: 54,
           height: 54,
           child: OutlinedButton(
-            onPressed: _togglePassageBookmark,
+            onPressed: () => _togglePassageBookmark(passage),
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.zero,
               shape: const CircleBorder(),
@@ -778,7 +945,7 @@ class _BibleScreenState extends State<BibleScreen> {
             ],
           ),
           const SizedBox(height: 22),
-          _buildChapterNavigation(context),
+          _buildChapterNavigation(context, passage),
           const SizedBox(height: 12),
         ],
       ),

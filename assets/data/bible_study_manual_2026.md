@@ -393,7 +393,7 @@ The psalm ends with yet another reference to the "Lord of Heaven's Armies" (vers
 
 thou hadst formed the earth and the world, even from everlasting to everlasting, thou art God_ (KJV).
 
-**CENTRAL TRUTH Though people are mortal, they can have everlasting life through**
+**CENTRAL TRUTH: Though people are mortal, they can have everlasting life through**
 
 Jesus Christ.
 

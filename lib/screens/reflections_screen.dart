@@ -34,15 +34,17 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
     }
   }
 
-  Future<void> _showAddNoteDialog() async {
-    final titleController = TextEditingController();
-    final bodyController = TextEditingController();
+  Future<void> _showReflectionDialog({ReflectionNote? note}) async {
+    final TextEditingController titleController =
+        TextEditingController(text: note?.title ?? '');
+    final TextEditingController bodyController =
+        TextEditingController(text: note?.content ?? '');
 
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('New Reflection'),
+          title: Text(note == null ? 'New Reflection' : 'Edit Reflection'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -65,23 +67,25 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final title = titleController.text.trim();
-                final body = bodyController.text.trim();
+                final String title = titleController.text.trim();
+                final String body = bodyController.text.trim();
                 if (title.isEmpty || body.isEmpty) {
                   return;
                 }
 
-                final navigator = Navigator.of(dialogContext);
-                final messenger = ScaffoldMessenger.of(context);
-                final note = ReflectionNote(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                final NavigatorState navigator = Navigator.of(dialogContext);
+                final ScaffoldMessengerState messenger =
+                    ScaffoldMessenger.of(context);
+
+                final ReflectionNote updatedNote = ReflectionNote(
+                  id: note?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
                   title: title,
-                  type: 'personal',
+                  type: note?.type ?? 'personal',
                   content: body,
-                  date: DateTime.now(),
+                  date: note?.date ?? DateTime.now(),
                 );
 
-                await DataService().saveReflection(note);
+                await DataService().saveReflection(updatedNote);
                 if (!mounted) {
                   return;
                 }
@@ -89,10 +93,16 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
                 navigator.pop();
                 _loadReflections();
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('Reflection saved.')),
+                  SnackBar(
+                    content: Text(
+                      note == null
+                          ? 'Reflection saved.'
+                          : 'Reflection updated.',
+                    ),
+                  ),
                 );
               },
-              child: const Text('Save'),
+              child: Text(note == null ? 'Save' : 'Update'),
             ),
           ],
         );
@@ -103,10 +113,46 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
     bodyController.dispose();
   }
 
+  Future<void> _confirmDelete(ReflectionNote note) async {
+    final bool? shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Reflection'),
+          content: Text('Delete "${note.title}" from your reflections?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) {
+      return;
+    }
+
+    await DataService().deleteReflection(note.id);
+    if (!mounted) {
+      return;
+    }
+
+    _loadReflections();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Reflection deleted.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).primaryColor;
-    final filteredNotes = _filteredNotes();
+    final Color primaryColor = Theme.of(context).primaryColor;
+    final List<ReflectionNote> filteredNotes = _filteredNotes();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9FB),
@@ -145,7 +191,7 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _showAddNoteDialog,
+                onPressed: () => _showReflectionDialog(),
                 icon: const Icon(Icons.edit),
                 label: const Text('Create New Note'),
                 style: ElevatedButton.styleFrom(
@@ -167,7 +213,7 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
             ),
             const SizedBox(height: 16),
             if (filteredNotes.isNotEmpty)
-              ...filteredNotes.map(_buildNoteCard)
+              ...filteredNotes.map((ReflectionNote note) => _buildNoteCard(context, note))
             else
               Container(
                 width: double.infinity,
@@ -193,18 +239,19 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
   }
 
   List<ReflectionNote> _filteredNotes() {
-    final query = _searchController.text.trim().toLowerCase();
+    final String query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) {
       return _reflections;
     }
 
-    return _reflections.where((note) {
+    return _reflections.where((ReflectionNote note) {
       return note.title.toLowerCase().contains(query) ||
-          note.content.toLowerCase().contains(query);
+          note.content.toLowerCase().contains(query) ||
+          note.type.toLowerCase().contains(query);
     }).toList();
   }
 
-  Widget _buildNoteCard(ReflectionNote note) {
+  Widget _buildNoteCard(BuildContext context, ReflectionNote note) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Container(
@@ -224,20 +271,38 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'PERSONAL NOTE',
-                  style: TextStyle(
-                    color: Color(0xFFC7A962),
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${note.type.toUpperCase()} NOTE',
+                        style: const TextStyle(
+                          color: Color(0xFFC7A962),
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _formatDate(note.date),
+                        style: const TextStyle(color: Colors.grey, fontSize: 11),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  _formatDate(note.date),
-                  style: const TextStyle(color: Colors.grey, fontSize: 11),
+                IconButton(
+                  onPressed: () => _showReflectionDialog(note: note),
+                  icon: const Icon(Icons.edit_rounded),
+                  tooltip: 'Edit note',
+                ),
+                IconButton(
+                  onPressed: () => _confirmDelete(note),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  tooltip: 'Delete note',
                 ),
               ],
             ),
@@ -280,8 +345,10 @@ class _ReflectionsScreenState extends State<ReflectionsScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.menu_book_rounded,
-                  color: Theme.of(context).primaryColor),
+              Icon(
+                Icons.menu_book_rounded,
+                color: Theme.of(context).primaryColor,
+              ),
               const SizedBox(width: 10),
               Text(
                 'Study Reminder',

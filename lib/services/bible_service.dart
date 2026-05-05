@@ -162,6 +162,15 @@ class BibleService {
     return null;
   }
 
+  static BibleTranslation findTranslationByCode(String code) {
+    for (final BibleTranslation translation in translations) {
+      if (translation.code == code) {
+        return translation;
+      }
+    }
+    return kingJamesVersion;
+  }
+
   static String _normalizeBookName(String name) {
     final String normalized = name.trim().toLowerCase();
     return normalized == 'psalm' ? 'psalms' : normalized;
